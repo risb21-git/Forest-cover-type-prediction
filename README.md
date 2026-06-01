@@ -40,7 +40,7 @@ The dataset contains 54 input features across three categories:
 4. **Evaluation** — Accuracy score, cross-validation with StratifiedKFold
 5. **Model Export** — saved as `model.pkl` using Python's pickle library
 
-**Final Model Accuracy: ~87%**
+**Final Model Accuracy: ~86%**
 
 ---
 
