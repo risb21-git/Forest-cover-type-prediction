@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Forest Cover Type Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f4f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Banner */
+    .banner {
+      position: relative;
+      width: 100%;
+      height: 190px;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 1.75rem;
+      display: flex;
+      align-items: flex-end;
+    }
+    .banner-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #173404 0%, #3B6D11 55%, #085041 100%);
+    }
+    .banner-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    .banner-text {
+      position: relative;
+      z-index: 2;
+      padding: 1.5rem 2rem;
+    }
+    .banner-text h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 34px;
+      font-weight: 700;
+      color: #EAF3DE;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+    .banner-text p {
+      font-size: 13px;
+      color: #9FE1CB;
+      margin-top: 5px;
+      font-weight: 300;
+    }
+
+    /* Cards */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e0ddd6;
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .counter {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: auto;
+    }
+    .counter.ok  { background: #EAF3DE; color: #27500A; }
+    .counter.bad { background: #FCEBEB; color: #A32D2D; }
+
+    textarea.feat-input {
+      width: 100%;
+      border: 1px solid #e0ddd6;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: 'Inter', monospace;
+      font-size: 12.5px;
+      background: #fafaf8;
+      color: #1a1a1a;
+      resize: none;
+      height: 80px;
+      outline: none;
+      line-height: 1.7;
+      transition: border-color 0.15s;
+    }
+    textarea.feat-input:focus { border-color: #639922; }
+
+    .hint {
+      font-size: 11.5px;
+      color: #aaa;
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+
+    .err {
+      font-size: 12px;
+      color: #A32D2D;
+      background: #FCEBEB;
+      border: 1px solid #F7C1C1;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    /* Parsed preview */
+    .parsed-scroll {
+      overflow-x: auto;
+      margin-top: 12px;
+      padding-bottom: 4px;
+    }
+    .parsed-table { display: flex; gap: 6px; width: max-content; }
+    .p-cell {
+      background: #fafaf8;
+      border: 1px solid #e8e5de;
+      border-radius: 8px;
+      padding: 5px 10px;
+      min-width: 76px;
+    }
+    .p-cell .pn { font-size: 10px; color: #aaa; white-space: nowrap; margin-bottom: 2px; }
+    .p-cell .pv { font-size: 13px; font-weight: 500; color: #3B6D11; }
+
+    /* Predict button */
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      background: #27500A;
+      color: #C0DD97;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn:hover  { background: #173404; }
+    .btn:active { transform: scale(0.99); }
+
+    /* Result */
+    .result-wrap {
+      display: none;
+      border: 1px solid #e0ddd6;
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 1.25rem;
+    }
+    .result-wrap.show {
+      display: block;
+      animation: fadeUp 0.4s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .r-img {
+      width: 100%;
+      height: 230px;
+      object-fit: cover;
+      display: block;
+    }
+    .r-img-fallback {
+      width: 100%;
+      height: 230px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 90px;
+    }
+
+    .r-body {
+      padding: 1.5rem;
+      background: #ffffff;
+    }
+
+    .r-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .r-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      line-height: 1.1;
+      color: #1a1a1a;
+    }
+
+    .r-desc {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.75;
+      margin-bottom: 1.25rem;
+    }
+
+    .r-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+    .r-stat {
+      background: #fafaf8;
+      border: 1px solid #e8e5de;
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .r-stat .slab { font-size: 11px; color: #aaa; margin-bottom: 3px; }
+    .r-stat .sval { font-size: 14px; font-weight: 500; color: #1a1a1a; }
+
+    .conf-row { display: flex; align-items: center; gap: 10px; }
+    .conf-bg  {
+      flex: 1;
+      height: 7px;
+      background: #f0ede6;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .conf-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: #639922;
+      width: 0%;
+      transition: width 0.9s cubic-bezier(.22,.68,0,1.2);
+    }
+    .conf-num {
+      font-size: 13px;
+      font-weight: 500;
+      color: #3B6D11;
+      min-width: 38px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Banner -->
+  <div class="banner">
+    <div class="banner-bg"></div>
+    <div class="banner-pattern"></div>
+    <div class="banner-text">
+      <h1>Forest Cover Predictor</h1>
+      <p>ML-powered identification</p>
+    </div>
+  </div>
+
+  <!-- Input Card -->
+  <div class="card">
+    <div class="section-label">
+      &#9776; Paste feature values
+      <span class="counter bad" id="counter">0 / 54</span>
+    </div>
+    <textarea class="feat-input" id="fi"
+      placeholder="2596, 51, 3, 258, 0, 510, 221, 232, 148, 6279, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0">
+    </textarea>
+    <p class="hint">54 comma-separated values in training column order. Spaces are ignored.</p>
+    <div class="err" id="err"></div>
+    <div class="parsed-scroll" id="ps" style="display:none">
+      <div class="parsed-table" id="pt"></div>
+    </div>
+  </div>
+
+  <!-- Predict Button -->
+  <button class="btn" onclick="predict()">
+    &#127795; &nbsp;Identify Forest Type
+  </button>
+
+  <!-- Result -->
+  <div class="result-wrap" id="rw">
+    <div id="rimg"></div>
+    <div class="r-body">
+      <div class="r-badge" id="rbadge"></div>
+      <div class="r-name"  id="rname"></div>
+      <div class="r-desc"  id="rdesc"></div>
+      <div class="r-stats">
+        <div class="r-stat"><div class="slab">Elevation range</div><div class="sval" id="selev"></div></div>
+        <div class="r-stat"><div class="slab">Typical climate</div><div class="sval" id="sclim"></div></div>
+      </div>
+      <div class="section-label">&#9646; Model confidence</div>
+      <div class="conf-row">
+        <div class="conf-bg"><div class="conf-fill" id="cf"></div></div>
+        <div class="conf-num" id="cn"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const FEATS = [
+  'Elevation', 'Aspect', 'Slope', 'Horizontal_Distance_To_Hydrology',
+       'Vertical_Distance_To_Hydrology', 'Horizontal_Distance_To_Roadways',
+       'Hillshade_9am', 'Hillshade_Noon', 'Hillshade_3pm',
+       'Horizontal_Distance_To_Fire_Points', 'Wilderness_Area1',
+       'Wilderness_Area2', 'Wilderness_Area3', 'Wilderness_Area4',
+       'Soil_Type1', 'Soil_Type2', 'Soil_Type3', 'Soil_Type4', 'Soil_Type5',
+       'Soil_Type6', 'Soil_Type7', 'Soil_Type8', 'Soil_Type9', 'Soil_Type10',
+       'Soil_Type11', 'Soil_Type12', 'Soil_Type13', 'Soil_Type14',
+       'Soil_Type15', 'Soil_Type16', 'Soil_Type17', 'Soil_Type18',
+       'Soil_Type19', 'Soil_Type20', 'Soil_Type21', 'Soil_Type22',
+       'Soil_Type23', 'Soil_Type24', 'Soil_Type25', 'Soil_Type26',
+       'Soil_Type27', 'Soil_Type28', 'Soil_Type29', 'Soil_Type30',
+       'Soil_Type31', 'Soil_Type32', 'Soil_Type33', 'Soil_Type34',
+       'Soil_Type35', 'Soil_Type36', 'Soil_Type37', 'Soil_Type38',
+       'Soil_Type39', 'Soil_Type40'
+      ];  
+
+const TYPES = {
+  1: { name:'Spruce / Fir',        badge:'Subalpine · Type 1',   bc:'#E1F5EE', bt:'#085041',
+       desc:'Dense coniferous stands found at high elevations above 2800m. Engelmann Spruce and Subalpine Fir dominate these cold, moist slopes where snow persists well into summer.',
+       elev:'2800m – 3500m', clim:'Cold & moist',
+       img:'https://images.unsplash.com/photo-1448375240586-882707db888b?w=700&q=80', emoji:'🌲' },
+  2: { name:'Lodgepole Pine',       badge:'Montane · Type 2',     bc:'#EAF3DE', bt:'#27500A',
+       desc:'The most widespread forest type in the Rocky Mountains. Lodgepole Pine colonizes disturbed areas rapidly and forms dense, even-aged stands across a broad elevation range.',
+       elev:'2400m – 3000m', clim:'Subalpine cool',
+       img:'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=700&q=80', emoji:'🌳' },
+  3: { name:'Ponderosa Pine',       badge:'Lower Montane · Type 3',bc:'#FAEEDA', bt:'#633806',
+       desc:'Open, park-like forests with a grassy understory. Ponderosa Pine thrives on dry, south-facing slopes at lower elevations where fire historically maintained its structure.',
+       elev:'2000m – 2500m', clim:'Warm & dry',
+       img:'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=700&q=80', emoji:'🌵' },
+  4: { name:'Cottonwood / Willow',  badge:'Riparian · Type 4',    bc:'#E1F5EE', bt:'#0F6E56',
+       desc:'Lush riparian galleries hugging stream corridors. Cottonwood and Willow require constant soil moisture and form narrow but biologically rich linear forests along waterways.',
+       elev:'1800m – 2400m', clim:'Riparian moist',
+       img:'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=700&q=80', emoji:'🍃' },
+  5: { name:'Aspen',                badge:'Transitional · Type 5', bc:'#FAEEDA', bt:'#854F0B',
+       desc:"Aspen groves form vast clonal colonies — each stand is genetically a single organism. They colonize post-fire areas and create brilliant golden displays in autumn.",
+       elev:'2200m – 2900m', clim:'Cool temperate',
+       img:'https://images.unsplash.com/photo-1505418751847-665ed4106c65?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YXNwZW4lMjB0cmVlfGVufDB8fDB8fHww', emoji:'🍂' },
+  6: { name:'Douglas-fir',          badge:'Mesic Montane · Type 6',bc:'#E6F1FB', bt:'#0C447C',
+       desc:'Douglas-fir occupies moist, north-facing slopes at mid-elevations. One of the tallest and most commercially important conifers in North America, it can live over 1000 years.',
+       elev:'2100m – 2800m', clim:'Cool & mesic',
+       img:'https://images.unsplash.com/photo-1511497584788-876760111969?w=700&q=80', emoji:'🌿' },
+  7: { name:'Krummholz',            badge:'Alpine Treeline · Type 7',bc:'#F1EFE8', bt:'#444441',
+       desc:'At the edge of survival — Krummholz trees are sculpted by extreme wind, cold, and ice into prostrate, flag-form shapes. This is the boundary between forest and alpine tundra.',
+       elev:'3400m – 3800m', clim:'Alpine severe',
+       img:'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=700&q=80', emoji:'🏔️' }
+};
+
+function parse(raw) {
+  const parts = raw.trim().split(/[\s,]+/).filter(Boolean);
+  if (!parts.length) return null;
+  const nums = parts.map(Number);
+  return nums.some(isNaN) ? null : nums;
+}
+
+document.getElementById('fi').addEventListener('input', function () {
+  const v = parse(this.value);
+  const ctr = document.getElementById('counter');
+  const err = document.getElementById('err');
+  const ps  = document.getElementById('ps');
+  const pt  = document.getElementById('pt');
+  if (!v) {
+    ctr.textContent = '0 / 54'; ctr.className = 'counter bad';
+    ps.style.display = 'none'; err.style.display = 'none'; return;
+  }
+  ctr.textContent = v.length + ' / 54';
+  ctr.className = v.length === 54 ? 'counter ok' : 'counter bad';
+  if (v.length !== 54) {
+    err.textContent = 'Expected 54 values, got ' + v.length + '.';
+    err.style.display = 'block'; ps.style.display = 'none'; return;
+  }
+  err.style.display = 'none';
+  pt.innerHTML = FEATS.map((f, i) =>
+    '<div class="p-cell"><div class="pn">' + f + '</div><div class="pv">' + v[i] + '</div></div>'
+  ).join('');
+  ps.style.display = 'block';
+});
+function predict() {
+  const raw = document.getElementById('fi').value;
+  const v   = parse(raw);
+  const err = document.getElementById('err');
+  if (!v || v.length !== 54) {
+    err.textContent   = v ? 'Expected 54 values, got ' + v.length + '.' : 'Could not parse. Use comma-separated numbers.';
+    err.style.display = 'block'; return;
+  }
+  err.style.display = 'none';
+
+  fetch('/predict', {
+    method  : 'POST',
+    headers : { 'Content-Type': 'application/json' },
+    body    : JSON.stringify({ features: v })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.error) {
+      err.textContent   = 'Model error: ' + d.error;
+      err.style.display = 'block';
+      return;
+    }
+    show(d);
+  })
+  .catch(() => {
+    err.textContent   = 'Could not reach the server. Make sure Flask is running.';
+    err.style.display = 'block';
+  });
+}
+
+function show(d) {
+  const ri = document.getElementById('rimg');
+
+  const img = document.createElement('img');
+  img.className = 'r-img';
+  img.alt       = d.forest_name + ' forest';
+  img.onerror   = function () {
+    ri.innerHTML = '<div class="r-img-fallback" style="background:#EAF3DE">' + d.emoji + '</div>';
+  };
+  img.src = d.image_url;
+  ri.innerHTML = '';
+  ri.appendChild(img);
+
+  const badgeColors = {
+    1: { bc:'#E1F5EE', bt:'#085041' },
+    2: { bc:'#EAF3DE', bt:'#27500A' },
+    3: { bc:'#FAEEDA', bt:'#633806' },
+    4: { bc:'#E1F5EE', bt:'#0F6E56' },
+    5: { bc:'#FAEEDA', bt:'#854F0B' },
+    6: { bc:'#E6F1FB', bt:'#0C447C' },
+    7: { bc:'#F1EFE8', bt:'#444441' }
+  };
+  const bc    = badgeColors[d.forest_type] || badgeColors[2];
+  const badge = document.getElementById('rbadge');
+  badge.textContent      = d.badge;
+  badge.style.background = bc.bc;
+  badge.style.color      = bc.bt;
+
+  document.getElementById('rname').textContent = d.forest_name;
+  document.getElementById('rdesc').textContent = d.description;
+  document.getElementById('selev').textContent = d.elevation;
+  document.getElementById('sclim').textContent = d.climate;
+  document.getElementById('cn').textContent    = d.confidence + '%';
+
+  const rw = document.getElementById('rw');
+  rw.classList.remove('show');
+  void rw.offsetWidth;
+  rw.classList.add('show');
+  setTimeout(() => { document.getElementById('cf').style.width = d.confidence + '%'; }, 200);
+  rw.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>
