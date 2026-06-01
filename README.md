@@ -59,7 +59,7 @@ Built with **Flask** (backend) and **HTML/CSS/JavaScript** (frontend).
 | Layer | Technology |
 |---|---|
 | Machine Learning | scikit-learn, Random Forest |
-| Data Analysis | pandas, numpy, matplotlib, seaborn |
+| Data Analysis | pandas, numpy|
 | Backend | Python, Flask |
 | Frontend | HTML, CSS, JavaScript |
 | Model Serialization | pickle |
@@ -105,7 +105,6 @@ forest_cover_app/
 ├── app.py                  ← Flask backend & prediction API
 ├── model.pkl               ← Trained Random Forest model
 ├── requirements.txt        ← Python dependencies
-├── Procfile                ← Render deployment config
 └── templates/
       └── index.html        ← Frontend web interface
 ```
