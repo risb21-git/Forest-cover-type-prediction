@@ -1,7 +1,7 @@
 # 🌲 Forest Cover Type Prediction
 
 ## Project Overview
-A machine learning web application that predicts the type of forest cover in the Roosevelt National Forest, Colorado, based on cartographic variables such as elevation, soil type, wilderness area, and hillshade. The model classifies a given land patch into one of seven forest cover types using a trained Random Forest classifier, and presents the result through an interactive web interface with real forest imagery.
+A machine learning web application that predicts the type of forest cover based on cartographic variables such as elevation, soil type, wilderness area, and hillshade. The model classifies a given land patch into one of seven forest cover types using a trained Random Forest classifier, and presents the result through an interactive web interface with real forest imagery.
 
 ---
 
